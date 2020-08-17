@@ -55,11 +55,9 @@ sidebarLayout(
   ),
   
   mainPanel(
-    
+    htmlOutput("summary"),
     
     plotOutput("plot_pval"),
-    
-    htmlOutput("summary"),
     
     plotOutput("plot_tstat"),
     
