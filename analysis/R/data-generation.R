@@ -36,7 +36,7 @@ generate.data.2 <- function() {
                      Analysis_Group = NA,
                      Adverse_Event = outcome.binary,
                      Pain_Improvement = round(outcome.continuous, 1),
-                     Treatment_Length = round(outcome.tte.observation, 0))
+                     Therapy_Length = round(outcome.tte.observation, 0))
   
   data
 }
