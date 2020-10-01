@@ -39,6 +39,7 @@ simulate <- function(seed,
   if (design == "diff") {
     data.analysis <- data[data$period == "First" & data$time == "End", ]
     test <- t.test(measurement ~ exposure, data = data.analysis)
+    est <- diff(test$estimate)
   } else if (design == "change") {
     data.analysis <- data[data$period == "First", ]
     start.index <- which(data.analysis$time == "Start")
@@ -49,6 +50,7 @@ simulate <- function(seed,
     outcome <- data.analysis$measurement[end.index] - data.analysis$measurement[start.index]
     group <- data.analysis$exposure[end.index]
     test <- t.test(outcome ~ group)
+    est <- diff(test$estimate)
   } else if (design == "cross") {
     data.analysis <- data[data$time == "End", ]
     
@@ -61,9 +63,10 @@ simulate <- function(seed,
                   data.analysis$measurement[second.index]) *
       ifelse(data.analysis$exposure[first.index] == "Treatment", 1, -1)
     test <- t.test(outcome)
+    est <- test$estimate
   }
   
   return(c("tstat" = unname(test$statistic),
            "pval" = unname(test$p.value),
-           "est" = unname(diff(test$estimate))))
+           "est" = unname(est)))
 }
