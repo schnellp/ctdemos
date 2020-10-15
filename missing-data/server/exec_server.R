@@ -73,7 +73,7 @@ observeEvent(input$compute, {
   
   output$results <- renderUI(
     HTML(paste0(
-      "Complete case method",
+      "Missing outcome deletion",
       "<ul>",
       "<li>Estimate: ",
       round(diff(rev(test.naive$estimate)), 2),
