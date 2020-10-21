@@ -6,9 +6,7 @@ library(dplyr)
 library(scales)
 library(ggplot2)
 
-source("./R/data-generation.R")
-
-data <- generate.data()
+data <- read.csv("data/data.csv")
 
 need.matches <- data %>% filter(is.na(follow.up)) %>% pull(subject) %>% as.character()
 
