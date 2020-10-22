@@ -84,12 +84,15 @@ observeEvent(input$reset, {
     )
   )
   
-  repeat {
+  debug.i <- 0
+  
+  while (debug.i < nrow(nodes)) {
+    
+    debug.i <- debug.i + 1
+    
     li <- length(state_history)
     
     next.rejection <- find.next.rejection(state_history[[length(state_history)]])
-    
-    # print(next.rejection)
     
     if (length(next.rejection) == 0) {
       failed.to.reject <- state_history[[li]]$tests[
@@ -168,7 +171,8 @@ observeEvent(input$step_forward, {
   
   visNetworkProxy("network_exec") %>%
     visUpdateNodes(state_history[[state_index]]$nodes) %>%
-    visUpdateEdges(state_history[[state_index]]$edges)
+    visUpdateEdges(state_history[[state_index]]$edges) %>%
+  visRemoveEdges(state_history[[state_index]]$edge.mat[state_history[[state_index]]$edge.mat[, "weight"] == 0, "id"])
 })
 
 observeEvent(input$step_backward, {
@@ -186,7 +190,8 @@ observeEvent(input$step_backward, {
   
   visNetworkProxy("network_exec") %>%
     visUpdateNodes(state_history[[state_index]]$nodes) %>%
-    visUpdateEdges(state_history[[state_index]]$edges)
+    visUpdateEdges(state_history[[state_index]]$edges) %>%
+    visRemoveEdges(state_history[[state_index]]$edge.mat[state_history[[state_index]]$edge.mat[, "weight"] == 0, "id"])
 })
 
 observeEvent(input$step_end, {
@@ -201,80 +206,101 @@ find.next.rejection <- function(graph) {
 }
 
 redistribute.alpha <- function(graph, rejected.node) {
+  
+  new.graph <- graph
+  
   rejected.row <- which(graph$tests[, "id"] == rejected.node)
   
   ### node ###
   
   for (edge.id in unique(graph$edges$id)) {
     edge.row <- which(graph$edge.mat[, "id"] == edge.id)
-    if (edge.mat[edge.row, "from"] == rejected.node) {
-      target.row <- which(graph$tests[, "id"] == edge.mat[edge.row, "to"])
-      tests[target.row, "alpha"] <- tests[target.row, "alpha"] +
-        edge.mat[edge.row, "weight"] * tests[rejected.row, "alpha"]
+    if (graph$edge.mat[edge.row, "from"] == rejected.node) {
+      target.row <- which(graph$tests[, "id"] == graph$edge.mat[edge.row, "to"])
+      new.graph$tests[target.row, "alpha"] <- graph$tests[target.row, "alpha"] +
+        graph$edge.mat[edge.row, "weight"] * graph$tests[rejected.row, "alpha"]
     }
   }
   
-  tests[rejected.node, "alpha"] <- NA
+  new.graph$tests[rejected.node, "alpha"] <- NA
   
-  graph$description <- paste("Redistributing alpha from", tests[rejected.row, "hypname"])
-  graph$tests <- tests
-  graph$nodes <- data.frame(id = tests$id,
-                            label = construct.node.labels(tests))
-  graph$edge.mat <- edge.mat
-  graph$edges <- data.frame(id = edge.mat[, "id"],
-                            from = edge.mat[, "from"], to = edge.mat[, "to"],
-                            label = edge.mat[, "weight"],
-                            value = edge.mat[, "weight"])
+  new.graph$description <- paste("Redistributing alpha from", graph$tests[rejected.row, "hypname"])
+  new.graph$nodes <- data.frame(id = new.graph$tests$id,
+                                label = construct.node.labels(new.graph$tests))
+  new.graph$edges <- data.frame(id = new.graph$edge.mat[, "id"],
+                                from = new.graph$edge.mat[, "from"],
+                                to = new.graph$edge.mat[, "to"],
+                                label = new.graph$edge.mat[, "weight"],
+                                value = new.graph$edge.mat[, "weight"])
   
-  return(graph)
+  return(new.graph)
 }
 
 update.edges <- function(graph, rejected.node) {
   
   rejected.row <- which(graph$tests[, "id"] == rejected.node)
   
-  graph.new <- graph
-  graph.new$edge.mat[, "weight"] <- 0
+  graph.padded <- graph
+  
+  # fill out edge matrix with all possible edges, plus loops
+  test.ids <- unique(graph$tests[, "id"])
+  graph.padded$edge.mat <- data.frame(
+    id = max(graph$edge.mat[, "id"]) + (1 : (nrow(graph$tests) ^ 2)),
+    from = rep(test.ids, each = length(test.ids)),
+    to = rep(test.ids, times = length(test.ids)),
+    weight = 0
+  )
+  
+  # reset old edges
+  for (i in 1 : nrow(graph$edge.mat)) {
+    graph.padded$edge.mat[which(graph.padded$edge.mat[, "from"] == graph$edge.mat[i, "from"] &
+                                  graph.padded$edge.mat[, "to"] == graph$edge.mat[i, "to"]), ] <- 
+      graph$edge.mat[i, ]
+  }
+  
+  graph.new <- graph.padded
   graph.new$description <- "Reweighting edges"
   
-  for (i in 1 : nrow(graph$edge.mat)) {
-    l <- graph$edge.mat[i, "from"]
-    m <- graph$edge.mat[i, "to"]
+  for (i in 1 : nrow(graph.padded$edge.mat)) {
+    
+    l <- graph.padded$edge.mat[i, "from"]
+    m <- graph.padded$edge.mat[i, "to"]
     j <- rejected.node
     
     # l <- tail_of(graph, edge)
     # m <- head_of(graph, edge)
     # j <- V(graph)[rejected.node]
     
-    er.lm <- which(graph$edge.mat[, "from"] == l & graph$edge.mat[, "to"] == m)
-    er.lj <- which(graph$edge.mat[, "from"] == l & graph$edge.mat[, "to"] == j)
-    er.jl <- which(graph$edge.mat[, "from"] == j & graph$edge.mat[, "to"] == l)
-    er.jm <- which(graph$edge.mat[, "from"] == j & graph$edge.mat[, "to"] == m)
+    er.lm <- which(graph.padded$edge.mat[, "from"] == l & graph.padded$edge.mat[, "to"] == m)
+    er.lj <- which(graph.padded$edge.mat[, "from"] == l & graph.padded$edge.mat[, "to"] == j)
+    er.jl <- which(graph.padded$edge.mat[, "from"] == j & graph.padded$edge.mat[, "to"] == l)
+    er.jm <- which(graph.padded$edge.mat[, "from"] == j & graph.padded$edge.mat[, "to"] == m)
     
     # e.lm <- get.edge.ids(graph, c(l, m))
     # e.lj <- get.edge.ids(graph, c(l, j))
     # e.jl <- get.edge.ids(graph, c(j, l))
     # e.jm <- get.edge.ids(graph, c(j, m))
     
-    
-    
-    if (l != m &
-        !is.na(graph$tests[graph$tests[, "id"] == l, "alpha"]) &
-        !is.na(graph$tests[graph$tests[, "id"] == m, "alpha"])
+    if (l != m &&
+        !is.na(graph.padded$tests[graph.padded$tests[, "id"] == l, "alpha"]) &&
+        !is.na(graph.padded$tests[graph.padded$tests[, "id"] == m, "alpha"]) &&
+        graph.padded$edge.mat[er.lj, "weight"] * graph.padded$edge.mat[er.jl, "weight"] < 1
     ) {
-      
-      if (graph$edge.mat[er.lj, "weight"] * graph$edge.mat[er.jl, "weight"] < 1) {
-        graph.new$edge.mat[er.lm, "weight"] <-
-          (graph$edge.mat[er.lm, "weight"] +
-             graph$edge.mat[er.lj, "weight"] * graph$edge.mat[er.jm, "weight"]) /
-          (1 - graph$edge.mat[er.lj, "weight"] * graph$edge.mat[er.jl, "weight"])
-      }
+      graph.new$edge.mat[er.lm, "weight"] <-
+        (graph.padded$edge.mat[er.lm, "weight"] +
+           graph.padded$edge.mat[er.lj, "weight"] * graph.padded$edge.mat[er.jm, "weight"]) /
+        (1 - graph.padded$edge.mat[er.lj, "weight"] * graph.padded$edge.mat[er.jl, "weight"])
+    } else {
+      graph.new$edge.mat[er.lm, "weight"] <- 0
     }
     
   }
   
+  # graph.new$edge.mat <- graph.new$edge.mat[graph.new$edge.mat[, "weight"] > 0, ]
+  
   graph.new$edges <- data.frame(id = graph.new$edge.mat[, "id"],
-                      from = graph.new$edge.mat[, "from"], to = graph.new$edge.mat[, "to"],
+                      from = graph.new$edge.mat[, "from"],
+                      to = graph.new$edge.mat[, "to"],
                       label = graph.new$edge.mat[, "weight"],
                       value = graph.new$edge.mat[, "weight"])
   
