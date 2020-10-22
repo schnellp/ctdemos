@@ -24,8 +24,8 @@ tests <- data.frame(
 
 construct.node.labels <- function(tests) {
   labels <- paste0(tests$hypname,
-                   "\nalpha = ", signif(tests$alpha, 3),
-                   "\np = ", signif(tests$pval, 3))
+                   "\nalpha = ", signif(tests$alpha),
+                   "\np = ", signif(tests$pval))
   return(labels)
 }
 
@@ -112,7 +112,7 @@ colnames(edge.mat) <- c("id", "from", "to", "weight")
 
 edges <- data.frame(id = edge.mat[, "id"],
                     from = edge.mat[, "from"], to = edge.mat[, "to"],
-                    label = edge.mat[, "weight"],
+                    label = signif(edge.mat[, "weight"]),
                     value = edge.mat[, "weight"])
 
 add_edge <- function(from, to) {
@@ -123,7 +123,7 @@ add_edge <- function(from, to) {
   
   edges <<- data.frame(id = edge.mat[, "id"],
                        from = edge.mat[, "from"], to = edge.mat[, "to"],
-                       label = edge.mat[, "weight"],
+                       label = signif(edge.mat[, "weight"]),
                        value = edge.mat[, "weight"])
   
   visNetworkProxy("network") %>%
@@ -138,7 +138,7 @@ update_edge_weight <- function(id, weight) {
   edge.mat[edge.mat[, "id"] == id, "weight"] <<- weight
   edges <<- data.frame(id = edge.mat[, "id"],
                       from = edge.mat[, "from"], to = edge.mat[, "to"],
-                      label = edge.mat[, "weight"],
+                      label = signif(edge.mat[, "weight"]),
                       value = edge.mat[, "weight"])
   visNetworkProxy("network") %>% visUpdateEdges(edges)
 }
@@ -147,7 +147,7 @@ delete_edge <- function(id, update_ui = TRUE) {
   edge.mat <<- edge.mat[edge.mat[, "id"] != id, ]
   edges <<- data.frame(id = edge.mat[, "id"],
                        from = edge.mat[, "from"], to = edge.mat[, "to"],
-                       label = edge.mat[, "weight"],
+                       label = signif(edge.mat[, "weight"]),
                        value = edge.mat[, "weight"])
   
   if (update_ui) {

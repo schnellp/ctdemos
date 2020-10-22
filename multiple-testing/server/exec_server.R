@@ -230,7 +230,7 @@ redistribute.alpha <- function(graph, rejected.node) {
   new.graph$edges <- data.frame(id = new.graph$edge.mat[, "id"],
                                 from = new.graph$edge.mat[, "from"],
                                 to = new.graph$edge.mat[, "to"],
-                                label = new.graph$edge.mat[, "weight"],
+                                label = signif(new.graph$edge.mat[, "weight"]),
                                 value = new.graph$edge.mat[, "weight"])
   
   return(new.graph)
@@ -301,7 +301,7 @@ update.edges <- function(graph, rejected.node) {
   graph.new$edges <- data.frame(id = graph.new$edge.mat[, "id"],
                       from = graph.new$edge.mat[, "from"],
                       to = graph.new$edge.mat[, "to"],
-                      label = graph.new$edge.mat[, "weight"],
+                      label = signif(graph.new$edge.mat[, "weight"]),
                       value = graph.new$edge.mat[, "weight"])
   
   return(graph.new)
