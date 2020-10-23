@@ -63,96 +63,102 @@ output$network_exec <- renderVisNetwork({
 
 observeEvent(input$reset, {
   
-  visNetworkProxy("network") %>% visGetPositions(input = "network_positions")
-  
-  tests.exec <<- tests
-  nodes.exec <<- nodes
-  nodes.exec$color <<- "lightblue"
-  edge.mat.exec <<- edge.mat
-  edges.exec <<- edges
+  if (build_validation_string() == "") {
+    visNetworkProxy("network") %>% visGetPositions(input = "network_positions")
     
-  
-  exec_state$initialized <<- TRUE
-  
-  state_history <<- list(
-    list(
-      description = "Initialization",
-      tests = tests.exec,
-      nodes = nodes.exec,
-      edge.mat = edge.mat.exec,
-      edges = edges.exec
+    tests.exec <<- tests
+    nodes.exec <<- nodes
+    nodes.exec$color <<- "lightblue"
+    edge.mat.exec <<- edge.mat
+    edges.exec <<- edges
+    
+    
+    exec_state$initialized <<- TRUE
+    
+    state_history <<- list(
+      list(
+        description = "Initialization",
+        tests = tests.exec,
+        nodes = nodes.exec,
+        edge.mat = edge.mat.exec,
+        edges = edges.exec
+      )
     )
-  )
-  
-  debug.i <- 0
-  
-  while (debug.i < nrow(nodes)) {
     
-    debug.i <- debug.i + 1
+    debug.i <- 0
     
-    li <- length(state_history)
-    
-    next.rejection <- find.next.rejection(state_history[[length(state_history)]])
-    
-    if (length(next.rejection) == 0) {
-      failed.to.reject <- state_history[[li]]$tests[
-        !is.na(state_history[[li]]$tests[, "alpha"]),
-        "hypname"]
+    while (debug.i < nrow(nodes)) {
       
-      state_history[[li + 1]] <<-
-        list(
-          description = paste("Fail to reject:", paste(failed.to.reject, collapse = ", ")),
-          tests = state_history[[li]]$tests,
-          nodes = state_history[[li]]$nodes,
-          edge.mat = state_history[[li]]$edge.mat,
-          edges = state_history[[li]]$edges
-        )
+      debug.i <- debug.i + 1
       
-      break
-    } else {
-      state_history[[li + 1]] <<-
-        list(
-          description = paste("Reject",
-                              state_history[[li]]$tests[
-                                state_history[[li]]$tests[, "id"] == next.rejection,
-                                "hypname"]),
-          tests = state_history[[li]]$tests,
-          nodes = state_history[[li]]$nodes,
-          edge.mat = state_history[[li]]$edge.mat,
-          edges = state_history[[li]]$edges
-        )
+      li <- length(state_history)
       
-      state_history[[li + 1]]$nodes[
-        state_history[[li + 1]]$nodes$id == next.rejection,
-        "color"] <<- "lightgreen"
+      next.rejection <- find.next.rejection(state_history[[length(state_history)]])
       
-      ### redistribute alpha ###
+      if (length(next.rejection) == 0) {
+        failed.to.reject <- state_history[[li]]$tests[
+          !is.na(state_history[[li]]$tests[, "alpha"]),
+          "hypname"]
+        
+        state_history[[li + 1]] <<-
+          list(
+            description = paste("Fail to reject:", paste(failed.to.reject, collapse = ", ")),
+            tests = state_history[[li]]$tests,
+            nodes = state_history[[li]]$nodes,
+            edge.mat = state_history[[li]]$edge.mat,
+            edges = state_history[[li]]$edges
+          )
+        
+        break
+      } else {
+        state_history[[li + 1]] <<-
+          list(
+            description = paste("Reject",
+                                state_history[[li]]$tests[
+                                  state_history[[li]]$tests[, "id"] == next.rejection,
+                                  "hypname"]),
+            tests = state_history[[li]]$tests,
+            nodes = state_history[[li]]$nodes,
+            edge.mat = state_history[[li]]$edge.mat,
+            edges = state_history[[li]]$edges
+          )
+        
+        state_history[[li + 1]]$nodes[
+          state_history[[li + 1]]$nodes$id == next.rejection,
+          "color"] <<- "lightgreen"
+        
+        ### redistribute alpha ###
+        
+        li <- li + 1
+        
+        state_history[[li + 1]] <<- redistribute.alpha(state_history[[li]],
+                                                       next.rejection)
+        
+        ### update edge weights ###
+        
+        li <- li + 1
+        
+        state_history[[li + 1]] <<- update.edges(state_history[[li]],
+                                                 next.rejection)
+      }
       
-      li <- li + 1
       
-      state_history[[li + 1]] <<- redistribute.alpha(state_history[[li]],
-                                                     next.rejection)
-      
-      ### update edge weights ###
-      
-      li <- li + 1
-      
-      state_history[[li + 1]] <<- update.edges(state_history[[li]],
-                                               next.rejection)
     }
     
+    state_index <<- 1
     
+    update_step_string()
+    
+    enable("step_forward")
+    
+    visNetworkProxy("network_exec") %>%
+      visUpdateNodes(state_history[[state_index]]$nodes) %>%
+      visUpdateEdges(state_history[[state_index]]$edges)
+  } else {
+    showNotification(
+      "Error: invalid graph. Return to the 'Edit graph' tab and check graph validity.",
+      type = "error")
   }
-  
-  state_index <<- 1
-  
-  update_step_string()
-  
-  enable("step_forward")
-  
-  visNetworkProxy("network_exec") %>%
-    visUpdateNodes(state_history[[state_index]]$nodes) %>%
-    visUpdateEdges(state_history[[state_index]]$edges)
   
 })
 
