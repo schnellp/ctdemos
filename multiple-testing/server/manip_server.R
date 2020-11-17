@@ -318,7 +318,7 @@ build_validation_string <- function() {
     test_row <- which(tests[, "id"] == node_id)
     
     tot_edge_weights <- sum(edge.mat[edge.mat[, "from"] == node_id, "weight"])
-    if (abs(tot_edge_weights - 1) > 1e-4) {
+    if (abs(tot_edge_weights - 1) > 1e-4 && tot_edge_weights > 0) {
       output.string <- paste(
         output.string,
         "<li>",
