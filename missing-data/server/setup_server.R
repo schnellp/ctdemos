@@ -172,55 +172,61 @@ observe({
   shinyjs::toggle(id = "match_cycles_cutoff", condition = input$match_cycles_how == "category")
 })
 
-output$plot_bmi_age <- renderPlot({
-  # plot(bmi ~ age, data = data,
-  #      pch = ifelse(regimen == "paclitaxel", 0, 1) +
-  #        (!is.na(data$follow.up)) * 15,
-  #      cex = 2)
-  # legend("bottomleft", legend = c("paclitaxel", "docetaxel"), pch = c(0, 1))
-  
+output$plot_outcome_age <- renderPlot({
   plot.data <- data %>%
     mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = age, y = bmi,
-                        shape = interaction(regimen, follow.up.status),
-                        color = interaction(regimen, follow.up.status))) +
-    geom_point(size = 5) +
-    scale_shape_manual(name = "Treatment and (follow-up)",
-                       values = c(0, 1, 15, 16),
-                       limits = c("docetaxel.missing", "paclitaxel.missing",
-                                  "docetaxel.observed", "paclitaxel.observed"),
-                       labels = c("Docetaxel (missing)",
-                                  "Paclitaxel (missing)",
-                                  "Docetaxel (observed)",
-                                  "Paclitaxel (observed)")) +
-    scale_color_manual(name = "Treatment and (follow-up)",
-                       values = rep(hue_pal()(2), times = 2),
-                       limits = c("docetaxel.missing", "paclitaxel.missing",
-                                  "docetaxel.observed", "paclitaxel.observed"),
-                       labels = c("Docetaxel (missing)",
-                                  "Paclitaxel (missing)",
-                                  "Docetaxel (observed)",
-                                  "Paclitaxel (observed)")) +
+  ggplot(plot.data, aes(x = age, y = follow.up)) +
+    geom_point() +
     labs(x = "Age",
-         y = "BMI")
+         y = "Follow-up") +
+    geom_vline(data = plot.data %>% filter(is.na(follow.up)),
+               aes(xintercept = age),
+               linetype = 2)
 })
 
-output$plot_baseline_group <- renderPlot({
+output$plot_outcome_bmi <- renderPlot({
+  plot.data <- data %>%
+    mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  plot.data <- data %>% mutate(
-    group = interaction(regimen, is.na(follow.up)),
-    group = recode_factor(
-      group,
-      "docetaxel.FALSE" = "Docetaxel (observed)",
-      "docetaxel.TRUE" = "Docetaxel (missing)",
-      "paclitaxel.FALSE" = "Paclitaxel (observed)",
-      "paclitaxel.TRUE" = "Paclitaxel (missing)"
-    )
-  )
+  ggplot(plot.data, aes(x = bmi, y = follow.up)) +
+    geom_point() +
+    labs(x = "BMI",
+         y = "Follow-up") +
+    geom_vline(data = plot.data %>% filter(is.na(follow.up)),
+               aes(xintercept = bmi),
+               linetype = 2)
+})
+
+output$plot_outcome_baseline <- renderPlot({
+  plot.data <- data %>%
+    mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = group, y = baseline)) +
-    geom_jitter(width = 0.25, size = 3) +
-    xlab("Treatment and (follow-up)") +
-    ylab("Baseline")
+  ggplot(plot.data, aes(x = baseline, y = follow.up)) +
+    geom_point() +
+    labs(x = "Baseline",
+         y = "Follow-up") +
+    geom_vline(data = plot.data %>% filter(is.na(follow.up)),
+               aes(xintercept = baseline),
+               linetype = 2)
+})
+
+output$plot_outcome_treatment <- renderPlot({
+  plot.data <- data %>%
+    mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
+  
+  ggplot(plot.data, aes(x = regimen, y = follow.up)) +
+    geom_jitter(width = 0.2, height = 0) +
+    labs(x = "Regimen",
+         y = "Follow-up") +
+    annotate("text", x = "docetaxel", y = -Inf, vjust = -1, size = 5,
+             label = paste(plot.data %>% filter(is.na(follow.up), regimen == "docetaxel") %>% nrow(),
+                           "missing")) +
+    annotate("text", x = "paclitaxel", y = -Inf, vjust = -1, size = 5,
+             label = paste(plot.data %>% filter(is.na(follow.up), regimen == "paclitaxel") %>% nrow(),
+                           "missing"))
+})
+
+output$text_plot_note <- renderText({
+  "Vertical lines indicate missing outcome values."
 })

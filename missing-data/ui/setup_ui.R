@@ -116,8 +116,12 @@ tabPanel(
         tabPanel(
           title = "Plots",
           
-          plotOutput("plot_bmi_age"),
-          plotOutput("plot_baseline_group")
+          textOutput("text_plot_note"),
+          
+          plotOutput("plot_outcome_age"),
+          plotOutput("plot_outcome_bmi"),
+          plotOutput("plot_outcome_baseline"),
+          plotOutput("plot_outcome_treatment")
         ),
         
         tabPanel(
