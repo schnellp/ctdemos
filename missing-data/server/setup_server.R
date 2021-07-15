@@ -176,7 +176,7 @@ output$plot_outcome_age <- renderPlot({
   plot.data <- data %>%
     mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = age, y = follow.up)) +
+  ggplot(plot.data %>% filter(!is.na(follow.up)), aes(x = age, y = follow.up)) +
     geom_point() +
     labs(x = "Age",
          y = "Follow-up") +
@@ -189,7 +189,7 @@ output$plot_outcome_bmi <- renderPlot({
   plot.data <- data %>%
     mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = bmi, y = follow.up)) +
+  ggplot(plot.data %>% filter(!is.na(follow.up)), aes(x = bmi, y = follow.up)) +
     geom_point() +
     labs(x = "BMI",
          y = "Follow-up") +
@@ -202,7 +202,7 @@ output$plot_outcome_baseline <- renderPlot({
   plot.data <- data %>%
     mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = baseline, y = follow.up)) +
+  ggplot(plot.data %>% filter(!is.na(follow.up)), aes(x = baseline, y = follow.up)) +
     geom_point() +
     labs(x = "Baseline",
          y = "Follow-up") +
@@ -215,7 +215,7 @@ output$plot_outcome_treatment <- renderPlot({
   plot.data <- data %>%
     mutate(follow.up.status = if_else(is.na(follow.up), "missing", "observed"))
   
-  ggplot(plot.data, aes(x = regimen, y = follow.up)) +
+  ggplot(plot.data %>% filter(!is.na(follow.up)), aes(x = regimen, y = follow.up)) +
     geom_jitter(width = 0.2, height = 0) +
     labs(x = "Regimen",
          y = "Follow-up") +
