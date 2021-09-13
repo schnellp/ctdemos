@@ -69,8 +69,23 @@ observeEvent(input$reset, {
     tests.exec <<- tests
     nodes.exec <<- nodes
     nodes.exec$color <<- "lightblue"
-    edge.mat.exec <<- edge.mat
     edges.exec <<- edges
+    
+    # fill out edge matrix with all possible edges, plus loops
+    test.ids <- unique(tests.exec[, "id"])
+    edge.mat.exec <- data.frame(
+      id = max(edge.mat[, "id"]) + (1 : (nrow(tests.exec) ^ 2)),
+      from = rep(test.ids, each = length(test.ids)),
+      to = rep(test.ids, times = length(test.ids)),
+      weight = 0
+    )
+    
+    # reset old edges
+    for (i in 1 : nrow(edge.mat.exec)) {
+      edge.mat.exec[which(edge.mat.exec[, "from"] == edge.mat[i, "from"] &
+                            edge.mat.exec[, "to"] == edge.mat[i, "to"]), ] <- 
+        edge.mat[i, ]
+    }
     
     
     exec_state$initialized <<- TRUE
@@ -153,7 +168,8 @@ observeEvent(input$reset, {
     
     visNetworkProxy("network_exec") %>%
       visUpdateNodes(state_history[[state_index]]$nodes) %>%
-      visUpdateEdges(state_history[[state_index]]$edges)
+      visUpdateEdges(state_history[[state_index]]$edges) %>%
+      visRemoveEdges(state_history[[state_index]]$edge.mat[state_history[[state_index]]$edge.mat[, "weight"] == 0, "id"])
   } else {
     showNotification(
       "Error: invalid graph. Return to the 'Edit graph' tab and check graph validity.",
