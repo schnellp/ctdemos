@@ -232,7 +232,9 @@ update_inputs <- function(event) {
     enable("hypname")
     enable("alpha")
     enable("pval")
-    enable("delete_node")
+    if (nrow(nodes) > 1) {
+      enable("delete_node")
+    }
     enable("add_edge")
     hypname_value <- tests[tests[, "id"] == selections$node, "hypname"]
     alpha_value <- as.numeric(tests[tests[, "id"] == selections$node, "alpha"])
