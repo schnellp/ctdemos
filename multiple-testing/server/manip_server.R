@@ -120,6 +120,7 @@ add_edge <- function(from, to) {
   
   edge.mat <<- rbind(edge.mat,
                      c(new.id, from, to, 0))
+  colnames(edge.mat) <<- c("id", "from", "to", "weight")
   
   edges <<- data.frame(id = edge.mat[, "id"],
                        from = edge.mat[, "from"], to = edge.mat[, "to"],
