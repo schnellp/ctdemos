@@ -10,7 +10,7 @@ generate.subject <- function() {
   sex <- factor(sample(c("female", "male"),
                        size = 1,
                        prob = c(30, 70)),
-                levels = c("female", "male"))
+                levels = c("female", "male", "other / no response"))
   
   age <- round(30 + rbeta(1, 2, 5) * 70)
   age.binary <- factor(ifelse(age < 65, "<65", "65+"),
