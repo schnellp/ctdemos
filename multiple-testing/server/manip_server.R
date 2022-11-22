@@ -112,7 +112,7 @@ colnames(edge.mat) <- c("id", "from", "to", "weight")
 
 edges <- data.frame(id = edge.mat[, "id"],
                     from = edge.mat[, "from"], to = edge.mat[, "to"],
-                    label = signif(edge.mat[, "weight"]),
+                    label = as.character(signif(edge.mat[, "weight"])),
                     value = edge.mat[, "weight"])
 
 add_edge <- function(from, to) {
@@ -124,7 +124,7 @@ add_edge <- function(from, to) {
   
   edges <<- data.frame(id = edge.mat[, "id"],
                        from = edge.mat[, "from"], to = edge.mat[, "to"],
-                       label = signif(edge.mat[, "weight"]),
+                       label = as.character(signif(edge.mat[, "weight"])),
                        value = edge.mat[, "weight"])
   
   visNetworkProxy("network") %>%
@@ -139,7 +139,7 @@ update_edge_weight <- function(id, weight) {
   edge.mat[edge.mat[, "id"] == id, "weight"] <<- weight
   edges <<- data.frame(id = edge.mat[, "id"],
                       from = edge.mat[, "from"], to = edge.mat[, "to"],
-                      label = signif(edge.mat[, "weight"]),
+                      label = as.character(signif(edge.mat[, "weight"])),
                       value = edge.mat[, "weight"])
   visNetworkProxy("network") %>% visUpdateEdges(edges)
 }
@@ -148,7 +148,7 @@ delete_edge <- function(id, update_ui = TRUE) {
   edge.mat <<- edge.mat[edge.mat[, "id"] != id, ]
   edges <<- data.frame(id = edge.mat[, "id"],
                        from = edge.mat[, "from"], to = edge.mat[, "to"],
-                       label = signif(edge.mat[, "weight"]),
+                       label = as.character(signif(edge.mat[, "weight"])),
                        value = edge.mat[, "weight"])
   
   if (update_ui) {
