@@ -223,8 +223,9 @@ observeEvent(input$step_end, {
 find.next.rejection <- function(graph) {
   rejectable <- which(graph$tests[, "pval"] < graph$tests[, "alpha"])
   reject <- rejectable[which.min(graph$tests[rejectable, "pval"])]
+  reject.id <- graph$tests[reject, "id"]
   
-  reject
+  reject.id
 }
 
 redistribute.alpha <- function(graph, rejected.node) {
@@ -244,7 +245,7 @@ redistribute.alpha <- function(graph, rejected.node) {
     }
   }
   
-  new.graph$tests[rejected.node, "alpha"] <- NA
+  new.graph$tests[rejected.row, "alpha"] <- NA
   
   new.graph$description <- paste("Redistributing alpha from", graph$tests[rejected.row, "hypname"])
   new.graph$nodes <- data.frame(id = new.graph$tests$id,
